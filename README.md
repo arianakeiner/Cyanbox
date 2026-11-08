@@ -162,6 +162,7 @@ cyanbox/
 │   ├── config/cyanbox.php          Configuración propia según el modo
 │   ├── database/migrations/        Tablas (DER de la Etapa 2 con correcciones)
 │   ├── database/seeders/           BaseSeeder (roles, medios de pago) y DemoSeeder (datos del prototipo)
+│   ├── database/scripts/           cyanbox_postgresql.sql (script de creación de la base, alternativa a las migraciones)
 │   ├── routes/api.php              Endpoints y permisos por rol
 │   └── tests/                      Pruebas unitarias e integración
 └── cliente/                        Servicio cliente (React + TypeScript)
