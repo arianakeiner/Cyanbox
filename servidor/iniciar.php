@@ -37,6 +37,10 @@ function leer_env(string $archivo): array
             $datos[$m[1]] = trim($m[2], " \t\"'");
         }
     }
+    // Las variables de entorno del sistema (por ejemplo, las de Docker) tienen prioridad sobre el .env.
+    foreach (getenv() as $clave => $valor) {
+        if ($valor !== '' && str_starts_with($clave, 'PROD_')) $datos[$clave] = $valor;
+    }
     return $datos;
 }
 

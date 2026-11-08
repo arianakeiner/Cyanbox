@@ -109,6 +109,16 @@ La dirección de la API se guarda en `public/config.json` al iniciar, así que c
 
 ---
 
+### 2.1 Entorno estandarizado con Docker (opcional)
+
+Tal como se definió en la Etapa 2, el proyecto incluye un `docker-compose.yml` que levanta el mismo entorno en cualquier equipo: base PostgreSQL 16, servicio de persistencia y servicio cliente, ambos en modo producción.
+
+```bash
+docker compose up --build
+```
+
+Luego abrir **http://localhost:5173** e ingresar con `admin@cyanbox.local` / `cyanbox123` (conviene cambiar la clave desde *Administración → Usuarios y roles*). Las variables `PROD_*` del archivo compose reemplazan a las del `.env`. Para detenerlo: `docker compose down` (agregar `-v` para borrar también la base).
+
 ## 3. Pruebas automatizadas
 
 ```bash
@@ -183,4 +193,6 @@ cyanbox/
 
 **Estados.** Mesa: Disponible → Reservada → Ocupada → Solicita cuenta → Pendiente de pago → Disponible (Figura 9). Comanda: Borrador → Enviada → Pendiente en cocina → En preparación → Lista → Entregada, o Cancelada desde Borrador (Figura 10). Cualquier transición fuera del diagrama devuelve un error claro.
 
-**Pendientes que siguen sin definir** (se mantienen como en la Etapa 2): descuento automático de stock por receta (RF-19), forma del aviso "llamar al mozo" (RF-23), cancelación o modificación de comandas ya enviadas, división de cuentas e integración con pasarelas de pago (RF-22).
+**Pendientes que siguen sin definir** (se mantienen como en la Etapa 2): descuento automático de stock por receta (RF-19), cancelación o modificación de comandas ya enviadas, división de cuentas e integración con pasarelas de pago (RF-22).
+
+**Excluido de esta versión por decisión del equipo:** la función "llamar al mozo" (RF-23). Su forma de aviso no se había definido con el cliente y se quitó del alcance de la versión funcional.

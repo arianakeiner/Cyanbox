@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MesaController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\ReporteController;
 use App\Http\Controllers\Api\ReservaController;
+use App\Http\Controllers\Api\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -93,5 +94,10 @@ Route::middleware('auth.token')->group(function () {
         Route::put('ingredientes/{ingrediente}', [InventarioController::class, 'guardarIngrediente']);
         Route::get('recetas', [InventarioController::class, 'recetas']);
         Route::get('reportes/resumen', [ReporteController::class, 'resumen']);
+        Route::get('usuarios', [UsuarioController::class, 'index']);
+        Route::get('roles', [UsuarioController::class, 'roles']);
+        Route::post('usuarios', [UsuarioController::class, 'store']);
+        Route::put('usuarios/{usuario}', [UsuarioController::class, 'update']);
+        Route::delete('usuarios/{usuario}', [UsuarioController::class, 'destroy']);
     });
 });

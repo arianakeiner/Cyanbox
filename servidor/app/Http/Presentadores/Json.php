@@ -14,7 +14,7 @@ class Json
 {
     public static function usuario(Usuario $u): array
     {
-        return ['id' => $u->id, 'nombre' => $u->nombre, 'email' => $u->email, 'rol' => $u->rol?->nombre, 'activo' => $u->activo];
+        return ['id' => $u->id, 'nombre' => $u->nombre, 'email' => $u->email, 'rol' => $u->rol?->nombre, 'id_rol' => $u->id_rol, 'activo' => (bool) $u->activo];
     }
 
     public static function producto(Producto $p): array

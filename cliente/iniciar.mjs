@@ -123,7 +123,8 @@ async function main() {
 
   let config
   try {
-    config = resolverConfig(modo, leerEnv(readFileSync(ENV, 'utf8')))
+    // Las variables de entorno del sistema (por ejemplo, las de Docker) tienen prioridad sobre el .env
+    config = resolverConfig(modo, { ...leerEnv(readFileSync(ENV, 'utf8')), ...Object.fromEntries(Object.entries(process.env).filter(([k, v]) => k.startsWith('PROD_') && v)) })
   } catch (e) {
     salirConError(`${e.message}\n    Completalos y volvé a ejecutar, o iniciá en modo prueba: node iniciar.mjs prueba`)
   }

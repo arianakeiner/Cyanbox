@@ -99,6 +99,26 @@ class CrudTest extends TestCase
         $this->deleteJson("/api/categorias/{$conProductos->id}", [], $admin)->assertStatus(409);
     }
 
+    public function test_crud_de_usuarios_y_roles(): void
+    {
+        $admin = $this->comoUsuario('admin@cyanbox.local');
+        $idMozo = \App\Models\Rol::where('nombre', 'mozo')->value('id');
+
+        $id = $this->postJson('/api/usuarios', ['nombre' => 'Mozo Nuevo', 'email' => 'Nuevo@Cyanbox.local', 'id_rol' => $idMozo, 'password' => 'clave1234'], $admin)
+            ->assertCreated()->assertJsonPath('email', 'nuevo@cyanbox.local')->assertJsonPath('rol', 'mozo')->json('id');
+        $this->postJson('/api/usuarios', ['nombre' => 'Otro', 'email' => 'nuevo@cyanbox.local', 'id_rol' => $idMozo], $admin)
+            ->assertStatus(422)->assertJsonValidationErrors(['email', 'password']);
+        $this->postJson('/api/login', ['email' => 'nuevo@cyanbox.local', 'password' => 'clave1234'])->assertOk();
+
+        $this->putJson("/api/usuarios/{$id}", ['nombre' => 'Mozo Nuevo', 'email' => 'nuevo@cyanbox.local', 'id_rol' => $idMozo, 'activo' => false], $admin)
+            ->assertOk()->assertJsonPath('activo', false);
+        $this->postJson('/api/login', ['email' => 'nuevo@cyanbox.local', 'password' => 'clave1234'])->assertForbidden();
+
+        $this->deleteJson("/api/usuarios/{$id}", [], $admin)->assertOk();
+        $joel = \App\Models\Usuario::where('email', 'mozo@cyanbox.local')->first();
+        $this->deleteJson("/api/usuarios/{$joel->id}", [], $admin)->assertStatus(409);
+    }
+
     public function test_permisos_por_rol(): void
     {
         $mozo = $this->comoUsuario('mozo@cyanbox.local');

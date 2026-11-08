@@ -1,0 +1,50 @@
+# CYANBOX · Entorno estandarizado con Docker (base PostgreSQL + persistencia + cliente)
+# Uso:  docker compose up --build      →  abrir http://localhost:5173
+# Usuario inicial: admin@cyanbox.local / cyanbox123 (cambiarlo desde Administración > Usuarios y roles)
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: cyanbox
+      POSTGRES_USER: cyanbox
+      POSTGRES_PASSWORD: cyanbox
+    volumes:
+      - datos_cyanbox:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyanbox -d cyanbox"]
+      interval: 3s
+      retries: 20
+
+  servidor:
+    build: ./servidor
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PROD_SERVIDOR_HOST: 0.0.0.0
+      PROD_SERVIDOR_PUERTO: 8000
+      PROD_APP_URL: http://localhost:8000
+      PROD_CLIENTES_PERMITIDOS: http://localhost:5173,http://127.0.0.1:5173
+      PROD_DB_HOST: db
+      PROD_DB_PORT: 5432
+      PROD_DB_DATABASE: cyanbox
+      PROD_DB_USERNAME: cyanbox
+      PROD_DB_PASSWORD: cyanbox
+      PROD_ADMIN_EMAIL: admin@cyanbox.local
+      PROD_ADMIN_PASSWORD: cyanbox123
+    ports:
+      - "8000:8000"
+
+  cliente:
+    build: ./cliente
+    depends_on:
+      - servidor
+    environment:
+      PROD_API_URL: http://localhost:8000/api
+      PROD_CLIENTE_HOST: 0.0.0.0
+      PROD_CLIENTE_PUERTO: 5173
+    ports:
+      - "5173:5173"
+
+volumes:
+  datos_cyanbox:

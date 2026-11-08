@@ -1,6 +1,6 @@
 export type Rol = 'admin' | 'mozo' | 'cocina' | 'caja' | 'recepcion'
 
-export interface Usuario { id: number; nombre: string; email: string; rol: Rol; activo: boolean }
+export interface Usuario { id: number; nombre: string; email: string; rol: Rol; id_rol: number; activo: boolean }
 
 export type EstadoMesa = 'disponible' | 'reservada' | 'ocupada' | 'solicita_cuenta' | 'pendiente_pago'
 export type EstadoComanda = 'borrador' | 'enviada' | 'pendiente_cocina' | 'en_preparacion' | 'lista' | 'entregada' | 'cancelada'

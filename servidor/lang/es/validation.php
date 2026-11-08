@@ -31,6 +31,6 @@ return [
         'numero' => 'número', 'capacidad' => 'capacidad', 'cantidad' => 'cantidad de personas', 'comensales' => 'comensales',
         'fecha_hora' => 'fecha y hora', 'telefono' => 'teléfono', 'monto' => 'monto', 'items' => 'productos',
         'items.*.cantidad' => 'cantidad', 'items.*.id_producto' => 'producto', 'stock_actual' => 'existencia',
-        'stock_minimo' => 'stock mínimo', 'unidad' => 'unidad',
+        'stock_minimo' => 'stock mínimo', 'id_rol' => 'rol', 'unidad' => 'unidad',
     ],
 ];
