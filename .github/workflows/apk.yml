@@ -1,0 +1,66 @@
+# Compila la app Android (APK) para tablets y la publica en la sección "Releases" del repositorio.
+# Se ejecuta en cada push a main y también se puede lanzar a mano desde la pestaña "Actions".
+name: APK Android
+
+on:
+  push:
+    branches: [main]
+    paths: ['cliente/**', '.github/workflows/apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cliente
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: cliente/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Compilar la aplicación web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npx cap sync android
+
+      - name: Compilar la APK
+        working-directory: cliente/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ../../Cyanbox.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cyanbox-apk
+          path: Cyanbox.apk
+
+      - name: Publicar en Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk
+          name: Cyanbox para Android (tablet)
+          make_latest: true
+          files: Cyanbox.apk
+          body: |
+            App de Cyanbox para tablets Android (Android 7 o superior).
+
+            1. Descargá **Cyanbox.apk** en la tablet e instalala. Si Android lo pide, permití instalar apps de origen desconocido.
+            2. Abrí la app y elegí **Probar en esta tablet**: funciona sola, con datos de ejemplo y sin conexión a otro equipo.
+            3. Ingresá con un usuario de prueba (contraseña `cyanbox123`), por ejemplo `mozo@cyanbox.local`.
+
+            Para usarla con el servidor del restaurante (producción), elegí **Producción** y escribí la dirección que muestra el servidor al iniciar (por ejemplo, 192.168.0.10).

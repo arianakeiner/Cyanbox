@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cyanbox</string>
+    <string name="title_activity_main">Cyanbox</string>
+    <string name="package_name">ar.cyanbox.gestion</string>
+    <string name="custom_url_scheme">ar.cyanbox.gestion</string>
+</resources>

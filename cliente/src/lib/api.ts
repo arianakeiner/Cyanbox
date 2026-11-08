@@ -30,7 +30,20 @@ export function mensajeDeError(e: unknown): string {
   return e instanceof Error ? e.message : 'Ocurrió un error inesperado.'
 }
 
+/** Dirección especial: la app instalada en la tablet usa su propio servicio de persistencia (modo prueba sin red). */
+export const API_LOCAL = 'local'
+
 export async function api<T = unknown>(ruta: string, opciones: { metodo?: string; datos?: unknown } = {}): Promise<T> {
+  if (baseUrl === API_LOCAL) {
+    const { servidorLocal } = await import('../local/servidor')
+    const r = await servidorLocal().manejar(opciones.metodo ?? 'GET', ruta, opciones.datos, token)
+    const cuerpo = r.cuerpo as { message?: string; errors?: Record<string, string[]> }
+    if (r.estado >= 400) {
+      if (r.estado === 401 && token) alVencerSesion()
+      throw new ErrorApi(cuerpo.message ?? `Error ${r.estado}`, r.estado, cuerpo.errors ?? {})
+    }
+    return r.cuerpo as T
+  }
   let respuesta: Response
   try {
     respuesta = await fetch(`${baseUrl}${ruta}`, {

@@ -4,12 +4,19 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { ProveedorApp } from './componentes/Contexto'
 import { cargarConfig } from './lib/config'
+import { ElegirServidor } from './paginas/ElegirServidor'
 import './estilos/prototipo.css'
 import './estilos/extra.css'
 
-// La configuración (modo y dirección de la API) se lee al abrir la app desde /config.json.
+// La configuración (modo y dirección de la API) se lee al abrir la app: desde /config.json en el navegador,
+// o desde la dirección guardada en la tablet cuando se usa la app instalada (APK).
 cargarConfig().then((config) => {
-  createRoot(document.getElementById('root')!).render(
+  const raiz = createRoot(document.getElementById('root')!)
+  if (config.nativa && !config.apiUrl) {
+    raiz.render(<StrictMode><ElegirServidor /></StrictMode>)
+    return
+  }
+  raiz.render(
     <StrictMode>
       <BrowserRouter>
         <ProveedorApp config={config}><App /></ProveedorApp>

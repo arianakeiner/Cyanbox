@@ -54,6 +54,19 @@ function escribir_env(string $archivo, string $clave, string $valor): void
     file_put_contents($archivo, $contenido);
 }
 
+/** Direcciones IPv4 de este equipo en la red local. */
+function direcciones_red(): array
+{
+    $ips = [];
+    foreach (function_exists('net_get_interfaces') ? (net_get_interfaces() ?: []) : [] as $interfaz) {
+        foreach ($interfaz['unicast'] ?? [] as $u) {
+            $ip = $u['address'] ?? '';
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && ! str_starts_with($ip, '127.')) $ips[] = $ip;
+        }
+    }
+    return array_values(array_unique($ips));
+}
+
 decir();
 decir('  ┌──────────────────────────────────────────────┐');
 decir('  │  CYANBOX · Servicio de persistencia (API)     │');
@@ -116,7 +129,8 @@ if ($modo === 'produccion') {
     $host = $vars['PROD_SERVIDOR_HOST'];
     $puerto = (int) $vars['PROD_SERVIDOR_PUERTO'];
 } else {
-    $host = '127.0.0.1';
+    // 0.0.0.0: la API también responde a las tablets conectadas a la misma red Wi-Fi.
+    $host = '0.0.0.0';
     $puerto = 8000;
     $sqlite = RAIZ.'/database/cyanbox_prueba.sqlite';
     if ($reiniciar && file_exists($sqlite)) {
@@ -148,12 +162,15 @@ if (artisan('migrate --force --no-interaction') !== 0) {
 artisan('db:seed --force --no-interaction -q');
 
 // 7. Arranque
-$url = $modo === 'produccion' && ($vars['PROD_APP_URL'] ?? '') !== '' ? $vars['PROD_APP_URL'] : "http://{$host}:{$puerto}";
+$url = $modo === 'produccion' && ($vars['PROD_APP_URL'] ?? '') !== '' ? $vars['PROD_APP_URL'] : 'http://'.($host === '0.0.0.0' ? '127.0.0.1' : $host).":{$puerto}";
 decir();
 decir("  ✔ Servicio de persistencia listo en {$url}/api");
 if ($modo === 'prueba') {
     decir('    Usuarios de prueba (contraseña: cyanbox123):');
     decir('      admin@cyanbox.local · mozo@cyanbox.local · cocina@cyanbox.local · caja@cyanbox.local · recepcion@cyanbox.local');
+}
+if ($host === '0.0.0.0' && ($ips = direcciones_red())) {
+    decir('    Dirección para tablets en la misma red Wi-Fi (app Android): '.implode(' · ', $ips));
 }
 decir('    Ahora iniciá el servicio cliente. Para detener este servicio: Ctrl + C');
 decir();

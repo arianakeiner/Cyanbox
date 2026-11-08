@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../componentes/Contexto'
 import { mensajeDeError, post } from '../lib/api'
+import { SERVIDOR_LOCAL, guardarServidor } from '../lib/config'
 import type { Rol, Usuario } from '../lib/tipos'
 
 // Pantalla inicial de cada perfil (igual que en el prototipo).
@@ -16,7 +17,7 @@ const PERFILES_PRUEBA = [
 ] as const
 
 export function Login() {
-  const { iniciarSesion, config } = useApp()
+  const { iniciarSesion, config, confirmar } = useApp()
   const navegar = useNavigate()
   const [email, setEmail] = useState('')
   const [clave, setClave] = useState('')
@@ -71,6 +72,19 @@ export function Login() {
               {PERFILES_PRUEBA.map(([icono, nombre, correo]) => (
                 <button type="button" key={correo} onClick={() => { setEmail(correo); setClave('cyanbox123'); ingresar(undefined, correo, 'cyanbox123') }}>{icono} {nombre}</button>
               ))}
+            </div>
+          )}
+          {config.nativa && (
+            <div style={{ marginTop: 16, fontSize: 12.5, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+              <span>{config.apiUrl === SERVIDOR_LOCAL ? 'Datos guardados en esta tablet' : `Servidor: ${config.apiUrl.replace(/^https?:\/\//, '').replace(/\/api$/, '')}`}</span>
+              <button type="button" className="ghost-btn small" onClick={() => { guardarServidor(null); window.location.reload() }}>Cambiar</button>
+              {config.apiUrl === SERVIDOR_LOCAL && (
+                <button type="button" className="ghost-btn small" onClick={async () => {
+                  if (!(await confirmar('Restablecer datos de ejemplo', 'Se borran los cambios hechos en esta tablet y se vuelven a cargar los datos de ejemplo.', 'Restablecer', true))) return
+                  const { servidorLocal } = await import('../local/servidor')
+                  servidorLocal().bd.reiniciar(); servidorLocal().bd.guardar(); window.location.reload()
+                }}>Restablecer datos</button>
+              )}
             </div>
           )}
         </form>

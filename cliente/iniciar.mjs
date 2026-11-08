@@ -13,6 +13,7 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { networkInterfaces } from 'node:os'
 import { createInterface } from 'node:readline/promises'
 import { fileURLToPath } from 'node:url'
 
@@ -53,7 +54,8 @@ function guardarEnEnv(clave, valor) {
 /** Configuración efectiva según el modo. En prueba no se lee ninguna variable: todo apunta a este equipo. */
 export function resolverConfig(modo, vars) {
   if (modo === 'prueba') {
-    return { modo, apiUrl: 'http://127.0.0.1:8000/api', host: 'localhost', puerto: 5173 }
+    // "auto": la app usa la API del mismo equipo que la publica (sirve en esta computadora y en una tablet de la red).
+    return { modo, apiUrl: 'auto', host: '0.0.0.0', puerto: 5173 }
   }
   const faltan = ['PROD_API_URL'].filter((k) => !vars[k])
   if (faltan.length) {
@@ -65,6 +67,11 @@ export function resolverConfig(modo, vars) {
     host: vars.PROD_CLIENTE_HOST || '0.0.0.0',
     puerto: Number(vars.PROD_CLIENTE_PUERTO || 5173),
   }
+}
+
+/** Direcciones IPv4 de este equipo en la red local (para abrir la app desde una tablet). */
+function direccionesRed() {
+  return Object.values(networkInterfaces()).flat().filter((i) => i && i.family === 'IPv4' && !i.internal).map((i) => i.address)
 }
 
 async function verificarServidor(apiUrl) {
@@ -133,8 +140,9 @@ async function main() {
   writeFileSync(join(RAIZ, 'public', 'config.json'), JSON.stringify({ modo: config.modo, apiUrl: config.apiUrl }, null, 2))
 
   if (!sinVerificar) {
-    decir(`  • Verificando el servicio de persistencia en ${config.apiUrl} ...`)
-    const estado = await verificarServidor(config.apiUrl)
+    const apiLocal = config.apiUrl === 'auto' ? 'http://127.0.0.1:8000/api' : config.apiUrl
+    decir(`  • Verificando el servicio de persistencia en ${apiLocal} ...`)
+    const estado = await verificarServidor(apiLocal)
     if (estado.error) {
       salirConError(
         `El servicio de persistencia ${estado.error}.\n` +
@@ -159,10 +167,18 @@ async function main() {
     comando = ['exec', '--', 'vite', 'preview', '--host', config.host, '--port', String(config.puerto), '--strictPort']
   }
 
-  const visible = config.host === '0.0.0.0' ? `http://<IP-de-este-equipo>:${config.puerto}` : `http://${config.host}:${config.puerto}`
   decir()
-  decir(`  ✔ Aplicación web disponible en ${visible}`)
-  decir('    Abrila desde el navegador de la tablet o la computadora. Para detener: Ctrl + C')
+  if (config.host === '0.0.0.0') {
+    decir(`  ✔ Aplicación web disponible en http://localhost:${config.puerto}`)
+    const ips = direccionesRed()
+    if (ips.length) {
+      decir(`    Desde una tablet o celular en la misma red Wi-Fi: ${ips.map((ip) => `http://${ip}:${config.puerto}`).join('  ·  ')}`)
+      if (modo === 'prueba') decir(`    En la app Android (APK), como servidor escribí: ${ips[0]}`)
+    }
+  } else {
+    decir(`  ✔ Aplicación web disponible en http://${config.host}:${config.puerto}`)
+  }
+  decir('    Para detener: Ctrl + C')
   decir()
   const hijo = spawn(npm, comando, { cwd: RAIZ, stdio: 'inherit', shell: esWindows })
   hijo.on('exit', (codigo) => process.exit(codigo ?? 0))

@@ -12,7 +12,13 @@ El sistema son **dos servicios independientes**:
 
 ```
  Tablet / PC (navegador) ──HTTP──▶ Servicio cliente (React)  ──API REST──▶ Servicio de persistencia (Laravel) ──▶ Base de datos
+ Tablet Android (APK)    ──────────────────────────────────────API REST──▶ Servicio de persistencia (Laravel)   (producción)
+ Tablet Android (APK)    ──▶ servicio de persistencia local dentro de la app ──▶ base local de la tablet      (modo prueba)
 ```
+
+**¿Cómo probarlo?**
+- **En una computadora (Mac, Windows o Linux):** sección 1, modo prueba en `localhost`.
+- **En una tablet Android:** sección 1.1, instalando `Cyanbox.apk`. En modo prueba funciona sola, sin red ni otra computadora.
 
 ---
 
@@ -66,6 +72,26 @@ Contraseña de todos: **`cyanbox123`**. En la pantalla de ingreso del modo prueb
 | Recepción | `recepcion@cyanbox.local` | Reservas (alta, edición, cancelación, baja), lista de espera, recibir clientes |
 
 ---
+
+### 1.1 App para tablets Android (APK)
+
+La app de Android empaqueta el mismo servicio cliente con [Capacitor](https://capacitorjs.com).
+
+1. Descargar **Cyanbox.apk** desde la sección *Releases* del repositorio (https://github.com/arianakeiner/Cyanbox/releases). GitHub la compila automáticamente en cada actualización de `main` (ver `.github/workflows/apk.yml`).
+2. Instalarla en la tablet (Android 7 o superior). Si Android lo pide, permitir instalar apps de origen desconocido.
+3. Al abrirla por primera vez se elige:
+   - **Probar en esta tablet (modo prueba):** la app trae su propio servicio de persistencia con la misma API, las mismas tablas, reglas de negocio y datos de ejemplo que el servidor en modo prueba. Los datos se guardan en la tablet. No necesita red ni otra computadora. Se ingresa con los mismos usuarios de prueba y se puede volver a los datos originales con **Restablecer datos**.
+   - **Producción:** se escribe la dirección del servidor del restaurante (por ejemplo `192.168.0.10`). El lanzador del servidor muestra esa dirección al iniciar.
+4. La elección se puede cambiar desde la pantalla de ingreso (**Cambiar**).
+
+Para compilar la APK en una computadora propia hace falta Android Studio (o el SDK de Android y JDK 21):
+```bash
+cd cliente
+npm run build && npx cap sync android
+cd android && ./gradlew assembleDebug      # genera app/build/outputs/apk/debug/app-debug.apk
+```
+
+> En modo prueba, la versión web también puede abrirse desde una tablet o celular conectado a la misma red Wi-Fi que la computadora: el lanzador del cliente muestra la dirección (por ejemplo `http://192.168.0.10:5173`). En macOS, la primera vez puede aparecer un aviso del firewall para permitir conexiones entrantes a PHP y Node.
 
 ## 2. Modo **producción**
 
@@ -122,8 +148,8 @@ Luego abrir **http://localhost:5173** e ingresar con `admin@cyanbox.local` / `cy
 ## 3. Pruebas automatizadas
 
 ```bash
-cd servidor && php artisan test     # 24 pruebas: unitarias (estados, cálculos) e integración (API + BD)
-cd cliente  && npm test             # 10 pruebas unitarias (carrito, formatos, validación de reservas)
+cd servidor && php artisan test     # 25 pruebas: unitarias (estados, cálculos) e integración (API + BD)
+cd cliente  && npm test             # 16 pruebas: unitarias y el servicio local de la app Android
 ```
 Las pruebas del servidor usan una base SQLite en memoria. También se pueden correr contra PostgreSQL:
 ```bash
@@ -139,7 +165,9 @@ CYANBOX_MODO=produccion PROD_DB_HOST=127.0.0.1 PROD_DB_DATABASE=cyanbox_test PRO
 | PU-05 | Unitaria | `cliente/src/pruebas/formato.test.ts` | Tiempo de ocupación (RF-04 / RN-02) y colores del mapa |
 | PU-06 | Unitaria | `cliente/src/pruebas/reservas.test.ts` | Validación del formulario de reservas |
 | PI-01 | Integración | `servidor/tests/Feature/CircuitoAtencionTest.php` | Recorrido completo: reserva → mesa → pedido → cocina → entrega → pedido adicional → cuenta → cobro → mesa libre; reglas RN-01 y RN-03 |
-| PI-02 | Integración | `servidor/tests/Feature/CrudTest.php` | CRUD de productos, reservas, mesas y categorías con validaciones (duplicados, obligatorios, superposición, eliminaciones protegidas) y permisos por rol |
+| PI-02 | Integración | `servidor/tests/Feature/CrudTest.php` | CRUD de productos, reservas, mesas, categorías y usuarios con validaciones (duplicados, obligatorios, superposición, eliminaciones protegidas) y permisos por rol |
+| PU-07 | Unitaria | `cliente/src/pruebas/config.test.ts` | Dirección del servidor escrita en la tablet y API del mismo equipo en modo prueba |
+| PI-03 | Integración | `cliente/src/pruebas/servidorLocal.test.ts` | Servicio local de la app Android: circuito completo, reglas RN-01/RN-03, validaciones, permisos y datos guardados en la tablet |
 
 ---
 
@@ -168,12 +196,15 @@ cyanbox/
 └── cliente/                        Servicio cliente (React + TypeScript)
     ├── iniciar.mjs                 Arranque con modo prueba / producción
     ├── .env.example
+    ├── capacitor.config.ts         Configuración de la app Android
+    ├── android/                    Proyecto Android (Capacitor) que genera Cyanbox.apk
     └── src/
         ├── lib/                    api.ts (HTTP + errores), config.ts, carrito.ts, formato.ts, tipos.ts
+        ├── local/                  Servicio de persistencia local de la app Android (bd.ts + servidor.ts)
         ├── componentes/            Contexto (sesión, avisos, confirmaciones), Layout, usarDatos
-        ├── paginas/                Login, Inicio, Salón, Pedido, Cocina, Reservas, Administración, Stock, Reportes
+        ├── paginas/                Login, ElegirServidor, Inicio, Salón, Pedido, Cocina, Reservas, Administración, Stock, Reportes
         ├── estilos/                prototipo.css (identidad visual del prototipo) + extra.css
-        └── pruebas/                Pruebas unitarias (Vitest)
+        └── pruebas/                Pruebas unitarias e integración (Vitest)
 ```
 
 ## 5. Correspondencia con la Etapa 2
