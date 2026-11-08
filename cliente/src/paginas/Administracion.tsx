@@ -24,6 +24,9 @@ const CAMPOS: Record<Pestaña, Campo[]> = {
   ],
 }
 const NOMBRE: Record<Pestaña, string> = { productos: 'producto', categorias: 'categoría', mesas: 'mesa' }
+// Concordancia de género: "Nuevo producto", "Nueva categoría", "Nueva mesa".
+const NUEVO_TXT: Record<Pestaña, string> = { productos: 'Nuevo producto', categorias: 'Nueva categoría', mesas: 'Nueva mesa' }
+const CREADO_TXT: Record<Pestaña, string> = { productos: 'Producto creado', categorias: 'Categoría creada', mesas: 'Mesa creada' }
 const NUEVO: Record<Pestaña, Record<string, unknown>> = {
   productos: { nombre: '', id_categoria: '', precio: '', emoji: '', descripcion: '', disponible: true, plato_del_dia: false },
   categorias: { nombre: '', orden: 0 },
@@ -51,7 +54,7 @@ export function Administracion() {
     const datos = Object.fromEntries(CAMPOS[pestaña].map((c) => [c.k, c.tipo === 'number' || c.k === 'id_categoria' ? (form[c.k] === '' ? null : Number(form[c.k])) : form[c.k] === '' ? null : form[c.k]]))
     try {
       if (form.id) await put(`/${pestaña}/${form.id}`, datos); else await post(`/${pestaña}`, datos)
-      avisar(form.id ? 'Cambios guardados' : `${NOMBRE[pestaña][0].toUpperCase()}${NOMBRE[pestaña].slice(1)} creada/o`, String(datos.nombre ?? ''), 'success')
+      avisar(form.id ? 'Cambios guardados' : CREADO_TXT[pestaña], String(datos.nombre ?? ''), 'success')
       setForm(null); recargar()
     } catch (e) {
       if (e instanceof ErrorApi) setErrores(Object.fromEntries(Object.entries(e.errores).map(([k, v]) => [k, v[0]])))
@@ -75,7 +78,7 @@ export function Administracion() {
     <>
       <div className="section-head">
         <div><h2>Administración</h2><p>Carta, categorías y mesas del salón. Los cambios se ven al instante en todos los equipos.</p></div>
-        <div className="section-actions"><button className="primary-btn" onClick={() => abrir()}>＋ Nueva {NOMBRE[pestaña]}</button></div>
+        <div className="section-actions"><button className="primary-btn" onClick={() => abrir()}>＋ {NUEVO_TXT[pestaña]}</button></div>
       </div>
       {errorCarga && <div className="error-box">{errorCarga}</div>}
       <div className="tabs-admin">
@@ -109,7 +112,7 @@ export function Administracion() {
       </div>
 
       {form && (
-        <Modal titulo={`${form.id ? 'Editar' : 'Nueva'} ${NOMBRE[pestaña]}`} alCerrar={() => setForm(null)} pie={<><button className="secondary-btn" onClick={() => setForm(null)}>Cancelar</button><button className="primary-btn" onClick={guardar}>Guardar</button></>}>
+        <Modal titulo={form.id ? `Editar ${NOMBRE[pestaña]}` : NUEVO_TXT[pestaña]} alCerrar={() => setForm(null)} pie={<><button className="secondary-btn" onClick={() => setForm(null)}>Cancelar</button><button className="primary-btn" onClick={guardar}>Guardar</button></>}>
           {error && <div className="error-box" role="alert">{error}</div>}
           <div className="form-grid">
             {CAMPOS[pestaña].map((c) => (
