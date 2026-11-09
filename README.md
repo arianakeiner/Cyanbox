@@ -16,9 +16,21 @@ El sistema son **dos servicios independientes**:
  Tablet Android (APK)    ──▶ servicio de persistencia local dentro de la app ──▶ base local de la tablet      (modo prueba)
 ```
 
-**¿Cómo probarlo?**
-- **En una computadora (Mac, Windows o Linux):** sección 1, modo prueba en `localhost`.
-- **En una tablet Android:** sección 1.1, instalando `Cyanbox.apk`. En modo prueba funciona sola, sin red ni otra computadora.
+## Cómo probarlo
+
+**En una tablet Android (sin instalar nada más):**
+1. Desde la tablet, descargar [Cyanbox.apk](https://github.com/arianakeiner/Cyanbox/releases/download/apk/Cyanbox.apk) e instalarla.
+2. Abrir la app y tocar **Probar en esta tablet**.
+3. Tocar el botón **Mozo** (o cualquier otro perfil) para ingresar. Contraseña de todos los usuarios: `cyanbox123`.
+
+**En una computadora (Mac, Windows o Linux)**, con PHP 8.3, Composer y Node.js instalados:
+1. En una terminal: `cd servidor` y `php iniciar.php prueba`.
+2. En otra terminal: `cd cliente` y `node iniciar.mjs prueba`.
+3. Abrir http://localhost:5173 e ingresar con el botón de cualquier perfil.
+
+Recorrido sugerido para ver el circuito completo: **Reservas** (nueva reserva) → **Salón** (ocupar la mesa) → **Pedido** (agregar productos y enviar) → ingresar como **Cocina** y avanzar la comanda → volver como **Mozo**, pedir la cuenta → ingresar como **Caja** y cobrar. Las pruebas automáticas se ejecutan con `php artisan test` (en `servidor`) y `npm test` (en `cliente`).
+
+El detalle de cada paso está en la sección 1 (computadora) y 1.1 (tablet), y en el documento PDF de la entrega.
 
 ---
 
